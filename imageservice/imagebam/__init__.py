@@ -5,8 +5,7 @@ import sys
 from bs4 import BeautifulSoup
 
 def get_image_url(url):
-    payload = {"imgContinue": "Continue to image ..."}
-    r = requests.post(url, data=payload)
+    r = requests.get(url)
     soup = BeautifulSoup(r.text, "html.parser")
     meta_elements = soup.find_all("meta", attrs={"property": "og:image"})
     meta_element = meta_elements[0]
