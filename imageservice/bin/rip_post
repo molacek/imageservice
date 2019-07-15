@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+
+from bs4 import BeautifulSoup
+import requests
+import sys
+import os
+import imageservice
+
+post_url = sys.argv[1]
+download_dir = sys.argv[2]
+post_id = post_url.split('#')[1][4:]
+
+if not os.path.isdir(download_dir):
+    os.mkdir(download_dir)
+os.chdir(download_dir)
+
+r = requests.get(post_url)
+
+soup = BeautifulSoup(r.text, 'html.parser')
+post_html = soup.find(id="post_message_{0:s}".format(post_id))
+
+image_links = post_html.find_all('a', attrs={"target": "_blank"})
+
+for image in image_links:
+    print("Downloading {0:s}".format(image["href"]))
+    imageservice.download(image["href"])
+
+
+
+
+

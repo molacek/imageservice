@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import imageservice
+import sys
+
+imageservice.download(sys.argv[1])
