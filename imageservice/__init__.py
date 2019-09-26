@@ -1,5 +1,6 @@
+"""Upload and validate images"""
 import requests
-from . import imxto, imagebam, pimpandhost
+from . import imxto, imagebam, pimpandhost, imagetwist
 
 
 def download(url, path=None):
@@ -24,3 +25,26 @@ def download(url, path=None):
     r = requests.get(image_url)
     with open(file_name, 'wb') as f:
         f.write(r.content)
+
+
+def validate(thumb_url, sess=None):
+    """Validate image status on server
+
+    Params:
+        thumb_url - url of the image thumbnail
+
+    Result codes:
+        "ok" - image exists
+        "not_found" - image has been removed from the server
+        "not_implemented - image service not implemented
+    """
+
+    if not sess:
+        sess = requests.Session()
+
+    if "imagetwist.com" in thumb_url:
+        imageservice = imagetwist
+    else:
+        return "not_implemented"
+
+    return imageservice.validate(thumb_url, sess)

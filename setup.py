@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+import setuptools
 
-setup(
+setuptools.setup(
     name="imageservice",
-    version="0.0.2",
+    version="0.0.3",
     packages=setuptools.find_packages(),
     scripts=[
         "imageservice/bin/scan",
         "imageservice/bin/image_download",
         "imageservice/bin/rip_post",
-    ]
+    ],
+    test_suite='nose.collector',
+    test_require=['nose']
 )
