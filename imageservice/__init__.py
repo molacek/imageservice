@@ -48,3 +48,12 @@ def validate(thumb_url, sess=None):
         return "not_implemented"
 
     return imageservice.validate(thumb_url, sess)
+
+
+def upload(service, filename):
+    if service == "imagetwist":
+        upload_module = imagetwist
+    else:
+        print("ERROR: Unknown service: {0:s}".format(service))
+        return False
+    return upload_module.upload(filename)
