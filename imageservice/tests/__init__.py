@@ -25,7 +25,9 @@ class TestValidate(TestCase):
 
     def test_upload_image(self):
         us = imageservice.imagetwist.Imagetwist('gr190501', 'Dopici123!')
-        (thumb, img) = us.upload('/home/lukas/Pictures/newstar/Gia/298/'
-                                 'Newstar Gia II - Set 298 (1).jpeg')
+        (thumb, img) = us.upload(
+            '/home/lukas/Pictures/hegre.com/Nicolette/'
+            '2017-02-20 - Nicolette skin on skin.zip/'
+            'nicolette-skin-on-skin-board.jpg')
         print(thumb, img)
         self.assertTrue(True)

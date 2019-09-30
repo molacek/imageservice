@@ -18,17 +18,20 @@ def verify_integrity(f):
 
 def image_buffer(filename, filesize=None):
 
-    # No imagesize limit is set
-    if not filesize:
-        with open(filename, 'rb') as f:
-            return(BytesIO(f.read()))
+    # Filezeise limit is set
+    if filesize:
+        statinfo = os.stat(filename)
+        if statinfo.st_size > filesize:
+            print("Image ", filename, "too large. Resizing...")
+            r = subprocess.run([
+                "convert",
+                filename,
+                "-define",
+                "jpeg:extent={0:d}".format(filesize),
+                "jpeg:-"
+            ], stdout=subprocess.PIPE)
 
-    r = subprocess.run([
-        "convert",
-        filename,
-        "-define",
-        "jpeg:extent={0:d}".format(filesize),
-        "jpeg:-"
-    ], stdout=subprocess.PIPE)
+            return BytesIO(r.stdout)
 
-    return BytesIO(r.stdout)
+    with open(filename, 'rb') as f:
+        return(BytesIO(f.read()))
