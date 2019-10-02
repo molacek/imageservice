@@ -1,5 +1,6 @@
 """Upload and validate images"""
 import requests
+import time
 from . import imxto, imagebam, pimpandhost, imagetwist, pixhost
 from . import turboimagehost
 
@@ -27,7 +28,16 @@ def download(url, path=None):
 
     (image_url, file_name) = image_data
 
-    r = requests.get(image_url)
+    while True:
+        try:
+            r = requests.get(image_url)
+        except requests.exceptions.ConnectionError:
+            print("Error connecting to {0:s}".format(image_url))
+            time.sleep(10)
+            continue
+
+        break
+
     with open(file_name, 'wb') as f:
         f.write(r.content)
 
