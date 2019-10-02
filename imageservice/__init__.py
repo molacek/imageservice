@@ -1,6 +1,7 @@
 """Upload and validate images"""
 import requests
-from . import imxto, imagebam, pimpandhost, imagetwist
+from . import imxto, imagebam, pimpandhost, imagetwist, pixhost
+from . import turboimagehost
 
 
 def download(url, path=None):
@@ -11,8 +12,12 @@ def download(url, path=None):
         (status, image_data) = imagebam.get_image_url(url)
     elif url.startswith("https://pimpandhost.com"):
         (status, image_data) = pimpandhost.get_image_url(url)
+    elif url.startswith("https://pixhost.to"):
+        (status, image_data) = pixhost.get_image_url(url)
+    elif url.startswith("https://www.turboimagehost.com"):
+        (status, image_data) = turboimagehost.get_image_url(url)
     else:
-        print("Cannot find image servis for downloading {0:s}".format(url))
+        print("Cannot find image service for downloading {0:s}".format(url))
 
         return(False)
 
