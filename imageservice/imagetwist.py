@@ -115,6 +115,10 @@ def validate(thumb_url, sess):
             print("Error connecting to {0:s}".format(thumb_url))
             time.sleep(10)
             continue
+        except requests.exceptions.ReadTimeout:
+            print("Read timeout for {0:s}".format(thumb_url))
+            time.sleep(10)
+            continue
         break
 
     if r.status_code == 404:
