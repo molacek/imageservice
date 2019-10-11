@@ -10,7 +10,7 @@ from . import utils
 
 class Imagetwist:
 
-    def __init__(self, username, password, proxies=None):
+    def __init__(self, username=None, password=None, proxies=None):
         self.username = username
         self.password = password
         self.logged_in = False
@@ -33,6 +33,9 @@ class Imagetwist:
 
     def _login(self):
 
+        if self.logged_in:
+            return
+
         r = self.session.post(
             "https://imagetwist.com/",
             data={
@@ -47,8 +50,10 @@ class Imagetwist:
         bs = BeautifulSoup(r.text, 'html.parser')
         self.sess_id = bs.find('input', {'name': 'sess_id'})["value"]
         self.action = bs.find('form', {'name': 'url'})["action"]
+        return
 
     def upload(self, filename):
+
         if not self.logged_in:
             self._login()
 
@@ -105,34 +110,50 @@ class Imagetwist:
 
         return(False)
 
+    def balance(self):
 
-def validate(thumb_url, sess):
+        if not self.logged_in:
+            self._login()
 
-    while True:
-        try:
-            r = sess.get(thumb_url)
-        except requests.exceptions.ConnectionError:
-            print("Error connecting to {0:s}".format(thumb_url))
-            time.sleep(10)
-            continue
-        except requests.exceptions.ReadTimeout:
-            print("Read timeout for {0:s}".format(thumb_url))
-            time.sleep(10)
-            continue
-        break
+        r = self.session.get("https://imagetwist.com/?op=my_account")
+        bs = BeautifulSoup(r.text, 'html.parser')
 
-    if r.status_code == 404:
-        return "not_found"
+        two_buttons_row = bs.find('div', {'class': 'row two_buttons'})
 
-    if "Content-Type" not in r.headers:
-        return "not_found"
+        balance_div = two_buttons_row.find_all(
+           'div',
+           {'class': 'col-xs-4 blue-bolded'}
+        )
 
-    if "Content-Length" not in r.headers:
-        return "not_found"
+        return(float(balance_div[1].text[1:]))
 
-    if r.headers["Content-Length"] == "8183":
-        image_md5 = hashlib.md5(r.content).hexdigest()
-        if image_md5 == "0bc8d04776c8eac2a12568d109162249":
+    def validate(self, thumb_url):
+
+        while True:
+            try:
+                r = self.session.get(thumb_url)
+            except requests.exceptions.ConnectionError:
+                print("Error connecting to {0:s}".format(thumb_url))
+                time.sleep(10)
+                continue
+            except requests.exceptions.ReadTimeout:
+                print("Read timeout for {0:s}".format(thumb_url))
+                time.sleep(10)
+                continue
+            break
+
+        if r.status_code == 404:
             return "not_found"
 
-    return "ok"
+        if "Content-Type" not in r.headers:
+            return "not_found"
+
+        if "Content-Length" not in r.headers:
+            return "not_found"
+
+        if r.headers["Content-Length"] == "8183":
+            image_md5 = hashlib.md5(r.content).hexdigest()
+            if image_md5 == "0bc8d04776c8eac2a12568d109162249":
+                return "not_found"
+
+        return "ok"

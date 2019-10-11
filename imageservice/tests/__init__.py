@@ -31,3 +31,8 @@ class TestValidate(TestCase):
             'nicolette-skin-on-skin-board.jpg')
         print(thumb, img)
         self.assertTrue(True)
+
+    def test_check_balance(self):
+        cb = imageservice.imagetwist.Imagetwist('gr190501', 'Dopici123!')
+        r = cb.balance()
+        self.assertTrue((r*0) == 0)
