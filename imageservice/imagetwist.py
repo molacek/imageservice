@@ -28,8 +28,14 @@ class Imagetwist:
             "upgrade-insecure-requests": "1"
         }
 
+        self._balance = None
+        self._files_count = None
+        self._used_space = None
+
         if proxies:
             self.session.proxies.update(proxies)
+
+        return
 
     def _login(self):
 
@@ -110,7 +116,7 @@ class Imagetwist:
 
         return(False)
 
-    def balance(self):
+    def _read_my_account(self):
 
         if not self.logged_in:
             self._login()
@@ -118,6 +124,7 @@ class Imagetwist:
         r = self.session.get("https://imagetwist.com/?op=my_account")
         bs = BeautifulSoup(r.text, 'html.parser')
 
+        # Extract balance
         two_buttons_row = bs.find('div', {'class': 'row two_buttons'})
 
         balance_div = two_buttons_row.find_all(
@@ -125,7 +132,47 @@ class Imagetwist:
            {'class': 'col-xs-4 blue-bolded'}
         )
 
-        return(float(balance_div[1].text[1:]))
+        self._balance = float(balance_div[1].text[1:])
+
+        # Extract used space
+        all_divs = bs.find_all('div')
+        for i, div in enumerate(all_divs):
+            if div.text == 'Used space:':
+                self._used_space = all_divs[i+1].text.split('\n')[1].strip()
+                break
+
+    def _read_my_files(self):
+
+        if not self.logged_in:
+            self._login()
+
+        r = self.session.get("https://imagetwist.com/?op=my_files")
+        bs = BeautifulSoup(r.text, 'html.parser')
+
+        # Extract files count
+        small = bs.find('small').text
+        self._files_count = small[1:-7]
+
+    def balance(self):
+
+        if self._balance is None:
+            self._read_my_account()
+
+        return(self._balance)
+
+    def used_space(self):
+
+        if self._used_space is None:
+            self._read_my_account()
+
+        return(self._used_space)
+
+    def files_count(self):
+
+        if self._files_count is None:
+            self._read_my_files()
+
+        return(self._files_count)
 
     def validate(self, thumb_url):
 

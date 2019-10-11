@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name="imageservice",
-    version="0.0.5",
+    version="0.0.6",
     packages=setuptools.find_packages(),
     scripts=[
         "imageservice/bin/scan",
