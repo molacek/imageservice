@@ -37,6 +37,10 @@ def download(url, path=None):
             print("Error connecting to {0:s}".format(image_url))
             time.sleep(10)
             continue
+        except requests.exceptions.ConnectionResetError:
+            print("Connection reset when downloading {0:s}".format(image_url))
+            time.sleep(10)
+            continue
 
         break
 
