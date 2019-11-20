@@ -3,7 +3,7 @@ import requests
 import time
 import random
 import string
-import os
+#import os
 from bs4 import BeautifulSoup
 from . import utils
 
@@ -58,6 +58,13 @@ class Imagetwist:
         self.action = bs.find('form', {'name': 'url'})["action"]
         return
 
+
+    def _random_filename(self, l=8):
+        letters = string.ascii_lowercase
+        fn = ''.join(random.choice(letters) for i in range(l))
+        return "{0:s}.jpg".format(fn)
+
+
     def upload(self, filename):
 
         if not self.logged_in:
@@ -72,10 +79,11 @@ class Imagetwist:
         upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
             "upload_type=file".format(self.action, upload_id)
 
-        upload_filename = os.path.basename(filename)
+        #upload_filename = os.path.basename(filename)
         upload_file = {
             "file_0": (
-                upload_filename,
+                self._random_filename(),
+                #upload_filename,
                 utils.image_buffer(filename, filesize=6000000),
                 "image/jpeg"
             ),
@@ -97,12 +105,19 @@ class Imagetwist:
             "submit_btn": "Upload"
         }
 
-        r = self.session.post(
-            upload_url,
-            headers=self.headers,
-            files=upload_file,
-            data=upload_data
-        )
+        while True:
+            try:
+                r = self.session.post(
+                    upload_url,
+                    headers=self.headers,
+                    files=upload_file,
+                    data=upload_data
+                )
+            except requests.exceptions.ConnectionError:
+                print("Connection error. Will try again")
+                time.sleep(10)
+
+            break
 
         bs = BeautifulSoup(r.text, 'html.parser')
         all_divs = bs.find_all('div')

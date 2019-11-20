@@ -4,11 +4,10 @@ import setuptools
 
 setuptools.setup(
     name="imageservice",
-    version="0.0.9",
+    version="0.0.10",
     packages=setuptools.find_packages(),
     install_requires=["requests", "bs4"],
     scripts=[
-        "imageservice/bin/scan",
         "imageservice/bin/image_download",
         "imageservice/bin/rip_post",
     ],
