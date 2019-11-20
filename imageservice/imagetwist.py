@@ -55,7 +55,7 @@ class Imagetwist:
 
         bs = BeautifulSoup(r.text, 'html.parser')
         self.sess_id = bs.find('input', {'name': 'sess_id'})["value"]
-        self.action = bs.find('form', {'name': 'url'})["action"]
+        self.action = bs.find('form', {'name': 'file'})["action"]
         return
 
 
