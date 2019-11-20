@@ -116,6 +116,7 @@ class Imagetwist:
             except requests.exceptions.ConnectionError:
                 print("Connection error. Will try again")
                 time.sleep(10)
+                continue
 
             break
 
