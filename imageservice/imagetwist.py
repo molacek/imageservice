@@ -127,7 +127,7 @@ class Imagetwist:
             if div.text == 'Preview:':
                 thumb = all_divs[n+1].find('img')["src"]
                 img = all_divs[n+1].find('a')["href"]
-                return(thumb, img)
+                return(thumb, '/'.join(img.split('/')[0:-1]))
             n += 1
 
         return(False)
