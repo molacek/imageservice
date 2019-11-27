@@ -42,16 +42,25 @@ class Imagetwist:
         if self.logged_in:
             return
 
-        r = self.session.post(
-            "https://imagetwist.com/",
-            data={
-               "op": "login",
-               "redirect": "",
-               "login": self.username,
-               "password": self.password,
-               "submit_btn": "Login"
-            }
-        )
+        while True:
+            try:
+                r = self.session.post(
+                    "https://imagetwist.com/",
+                    data={
+                       "op": "login",
+                       "redirect": "",
+                       "login": self.username,
+                       "password": self.password,
+                       "submit_btn": "Login"
+                    }
+                )
+            except requests.exceptions.ConnectionError:
+                print("Connection error when logging in into Imagetwist. "
+                      "Will try again in 10 seconds")
+                time.sleep(10)
+                continue
+
+            break
 
         bs = BeautifulSoup(r.text, 'html.parser')
         self.sess_id = bs.find('input', {'name': 'sess_id'})["value"]
