@@ -127,6 +127,11 @@ class Imagetwist:
                 time.sleep(10)
                 continue
 
+            except OpenSSL.SSL.Error:
+                print("SSL error. Will try again")
+                time.sleep(10)
+                continue
+
             break
 
         bs = BeautifulSoup(r.text, 'html.parser')
