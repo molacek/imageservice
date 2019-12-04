@@ -16,13 +16,16 @@ def verify_integrity(f):
         return True
 
 
-def image_buffer(filename, filesize=None):
+def image_buffer(filename, filesize=None, force=False):
 
     # Filezeise limit is set
     if filesize:
         statinfo = os.stat(filename)
-        if statinfo.st_size > filesize:
-            print("Image ", filename, "too large. Resizing...")
+        if statinfo.st_size > filesize or force:
+            if force:
+                print(f"Image {filename} forced to be processed by ImageMagick")
+            else:
+                print(f"Downsizing {filename} to {filesize} bytes")
             r = subprocess.run([
                 "convert",
                 filename,

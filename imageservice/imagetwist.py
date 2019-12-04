@@ -3,7 +3,6 @@ import requests
 import time
 import random
 import string
-#import os
 from bs4 import BeautifulSoup
 from . import utils
 
@@ -63,21 +62,40 @@ class Imagetwist:
             break
 
         bs = BeautifulSoup(r.text, 'html.parser')
+        if not bs:
+            print("Login failed")
+            return False
+
         self.sess_id = bs.find('input', {'name': 'sess_id'})["value"]
         self.action = bs.find('form', {'name': 'file'})["action"]
-        return
+        return True
 
-
-    def _random_filename(self, l=8):
+    def _random_filename(self, length=8):
         letters = string.ascii_lowercase
-        fn = ''.join(random.choice(letters) for i in range(l))
+        fn = ''.join(random.choice(letters) for i in range(length))
         return "{0:s}.jpg".format(fn)
 
+    def _prepare_upload_file(self, filename, filesize=6000000, force=False):
+        upload_file = {
+            "file_0": (
+                self._random_filename(),
+                utils.image_buffer(filename, filesize, force),
+                "image/jpeg"
+            ),
+            "file_1": (
+                "",
+                "",
+                "application/octet-stream"
+            )
+        }
+        return upload_file
 
     def upload(self, filename):
 
         if not self.logged_in:
-            self._login()
+            login_res = self._login()
+            if not login_res:
+                return False
 
         # Verify image integrity
         image_integrity_result = utils.verify_integrity(filename)
@@ -88,20 +106,7 @@ class Imagetwist:
         upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
             "upload_type=file".format(self.action, upload_id)
 
-        #upload_filename = os.path.basename(filename)
-        upload_file = {
-            "file_0": (
-                self._random_filename(),
-                #upload_filename,
-                utils.image_buffer(filename, filesize=6000000),
-                "image/jpeg"
-            ),
-            "file_1": (
-                "",
-                "",
-                "application/octet-stream"
-            )
-        }
+        upload_file = self._prepare_upload_file(filename, 6000000)
 
         upload_data = {
             "upload_type": "file",
@@ -114,6 +119,7 @@ class Imagetwist:
             "submit_btn": "Upload"
         }
 
+        forced = False
         while True:
             try:
                 r = self.session.post(
@@ -132,6 +138,20 @@ class Imagetwist:
                 time.sleep(10)
                 continue
 
+            if "<pre>not image at " in r.text:
+                if not forced:
+                    print("Imagetwist reported an image error. "
+                          "Trying to force image processing")
+                    upload_file = self._prepare_upload_file(
+                        filename, 6000000, True
+                    )
+                    forced = True
+                    continue
+                else:
+                    print(f"Unable to upload {filename} even after "
+                          "forced processing")
+                    return False
+
             break
 
         bs = BeautifulSoup(r.text, 'html.parser')
@@ -143,6 +163,9 @@ class Imagetwist:
                 img = all_divs[n+1].find('a')["href"]
                 return(thumb, '/'.join(img.split('/')[0:-1]))
             n += 1
+
+        print("Error result")
+        print(r.text)
 
         return(False)
 
