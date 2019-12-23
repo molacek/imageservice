@@ -133,8 +133,8 @@ class Imagetwist:
                 time.sleep(10)
                 continue
 
-            except OpenSSL.SSL.Error:
-                print("SSL error. Will try again")
+            except:
+                print("Other error. Will try again")
                 time.sleep(10)
                 continue
 
