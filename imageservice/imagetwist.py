@@ -231,6 +231,11 @@ class Imagetwist:
 
     def validate(self, thumb_url):
 
+        valid_schema = thumb_url.startswith("http://") or thumb_url.startswith("https://")
+
+        if not valid_schema:
+            return "invalid_schema"
+
         while True:
             try:
                 r = self.session.get(thumb_url)
