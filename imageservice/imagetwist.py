@@ -100,7 +100,9 @@ class Imagetwist:
         # Verify image integrity
         image_integrity_result = utils.verify_integrity(filename)
         if image_integrity_result is not True:
-            return(image_integrity_result)
+            status, error = image_integrity_result
+            print(f"Image integrity error: {error}")
+            return(False)
 
         upload_id = "".join(random.choice(string.digits) for _ in range(12))
         upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
