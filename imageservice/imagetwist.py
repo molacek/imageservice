@@ -66,8 +66,16 @@ class Imagetwist:
             print("Login failed")
             return False
 
-        self.sess_id = bs.find('input', {'name': 'sess_id'})["value"]
-        self.action = bs.find('form', {'name': 'file'})["action"]
+        sess_id_input = bs.find('input', {'name': 'sess_id'})
+        action_form = bs.find('form', {'name': 'file'})
+
+        if sess_id_input is None or action_form is None:
+            print("Unable to find sess_id or action. Login failed")
+            return False
+
+        self.sess_id = sess_id_input["value"]
+        self.action = action_form["action"]
+
         return True
 
     def _random_filename(self, length=8):
