@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name="imageservice",
-    version="0.0.19",
+    version="0.0.20",
     packages=setuptools.find_packages(),
     install_requires=["requests", "bs4"],
     scripts=[

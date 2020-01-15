@@ -3,8 +3,11 @@ import requests
 import time
 import random
 import string
+import os
+import sqlite3
 from bs4 import BeautifulSoup
 from . import utils
+from xdg import XDG_CACHE_HOME
 
 
 class Imagetwist:
@@ -30,6 +33,17 @@ class Imagetwist:
         self._balance = None
         self._files_count = None
         self._used_space = None
+
+        # Prepare blacklist database
+        blacklist_db_file = str(XDG_CACHE_HOME / "imageservice/blacklist.sqlite")
+        self.blacklist_db_conn = sqlite3.connect(blacklist_db_file)
+        self.blacklist_db_cur = self.blacklist_db_conn.cursor()
+        self.blacklist_db_cur.execute(
+            """CREATE TABLE IF NOT EXISTS blacklist (
+            id integer PRIMARY KEY,
+            path text NOT NULL);
+            """
+        )
 
         if proxies:
             self.session.proxies.update(proxies)
@@ -101,6 +115,23 @@ class Imagetwist:
 
     def upload(self, filename):
 
+        # Check if file exists
+        if not os.path.isfile(filename):
+            print(f"Error: {filename} is not a file")
+            return False
+
+        # Check if file is not on blacklist
+        self.blacklist_db_cur.execute(
+            "SELECT id FROM blacklist WHERE path = ?",
+            (os.path.realpath(filename),)
+        )
+        res = self.blacklist_db_cur.fetchone()
+        if res:
+            print(f"File {filename} is on blacklist")
+            return False
+
+
+        # Do user login
         if not self.logged_in:
             login_res = self._login()
             if not login_res:
@@ -123,7 +154,6 @@ class Imagetwist:
             "submit_btn": "Upload"
         }
 
-        forced = False
         while True:
             try:
                 r = self.session.post(
@@ -143,18 +173,17 @@ class Imagetwist:
                 continue
 
             if "<pre>not image at " in r.text:
-                if not forced:
-                    print("Imagetwist reported an image error. "
-                          "Trying to force image processing")
-                    upload_file = self._prepare_upload_file(
-                        filename, 6000000, True
-                    )
-                    forced = True
-                    continue
-                else:
-                    print(f"Unable to upload {filename} even after "
-                          "forced processing")
-                    return False
+                print(f"Unable to upload {filename} even after "
+                      "forced processing")
+
+                # Insert into blacklist
+                self.blacklist_db_cur.execute(
+                    "INSERT INTO blacklist VALUES(NULL, ?)",
+                    (os.path.realpath(filename),))
+                self.blacklist_db_conn.commit()
+                print(f"File {filename} is stored on blacklist")
+
+                return False
 
             break
 
