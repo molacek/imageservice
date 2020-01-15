@@ -84,10 +84,11 @@ class Imagetwist:
         return "{0:s}.jpg".format(fn)
 
     def _prepare_upload_file(self, filename, filesize=6000000, force=False):
+
         upload_file = {
             "file_0": (
                 self._random_filename(),
-                utils.image_buffer(filename, filesize, force),
+                utils.image_buffer(filename, filesize),
                 "image/jpeg"
             ),
             "file_1": (
@@ -104,13 +105,6 @@ class Imagetwist:
             login_res = self._login()
             if not login_res:
                 return False
-
-        # Verify image integrity
-        image_integrity_result = utils.verify_integrity(filename)
-        if image_integrity_result is not True:
-            status, error = image_integrity_result
-            print(f"Image integrity error: {error}")
-            return(False)
 
         upload_id = "".join(random.choice(string.digits) for _ in range(12))
         upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
