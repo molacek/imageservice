@@ -130,31 +130,33 @@ class Imagetwist:
             print(f"File {filename} is on blacklist")
             return False
 
-
-        # Do user login
-        if not self.logged_in:
-            login_res = self._login()
-            if not login_res:
-                return False
-
-        upload_id = "".join(random.choice(string.digits) for _ in range(12))
-        upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
-            "upload_type=file".format(self.action, upload_id)
-
-        upload_file = self._prepare_upload_file(filename, 6000000)
-
-        upload_data = {
-            "upload_type": "file",
-            "sess_id": self.sess_id,
-            "thumb_size": "350x350",
-            "per_row": "1",
-            "sdomain": "imagetwist.com",
-            "fld_id": "0",
-            "tos": "1",
-            "submit_btn": "Upload"
-        }
-
         while True:
+
+            # Do user login
+            if not self.logged_in:
+                login_res = self._login()
+                if not login_res:
+                    return False
+
+
+
+            upload_id = "".join(random.choice(string.digits) for _ in range(12))
+            upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
+                "upload_type=file".format(self.action, upload_id)
+
+            upload_file = self._prepare_upload_file(filename, 6000000)
+
+            upload_data = {
+                "upload_type": "file",
+                "sess_id": self.sess_id,
+                "thumb_size": "350x350",
+                "per_row": "1",
+                "sdomain": "imagetwist.com",
+                "fld_id": "0",
+                "tos": "1",
+                "submit_btn": "Upload"
+            }
+
             try:
                 r = self.session.post(
                     upload_url,
@@ -164,11 +166,13 @@ class Imagetwist:
                 )
             except requests.exceptions.ConnectionError:
                 print("Connection error. Will try again")
+                self.logged_in = False
                 time.sleep(10)
                 continue
 
             except:
                 print("Other error. Will try again")
+                self.logged_in = False
                 time.sleep(10)
                 continue
 
