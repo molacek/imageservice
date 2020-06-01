@@ -1,6 +1,7 @@
 """Upload and validate images"""
 import requests
 import time
+import sys
 from . import imxto, imagebam, pimpandhost, imagetwist, pixhost, imgbox
 from . import turboimagehost
 
@@ -19,6 +20,20 @@ def download(url, path=None):
         (status, image_data) = turboimagehost.get_image_url(url)
     elif url.startswith("https://imgbox.com"):
         (status, image_data) = imgbox.get_image_url(url)
+    elif url.startswith("https://imagetwist.com"):
+        it = imagetwist.Imagetwist()
+        result = it.get_image(url)
+        if not result.status:
+            return result
+
+        if not path:
+            path = result.filename
+
+        with open(path, 'wb') as f:
+            f.write(result.image)
+
+        return result
+
     else:
         print("Cannot find image service for downloading {0:s}".format(url))
 

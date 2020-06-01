@@ -20,7 +20,7 @@ class Imagetwist:
         self.user_agent = ("Mozilla/5.0 (Windows NT 6.3; Win64; x64) "
                            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
                            "51.0.2683.0 Safari/537.36")
-        self.headers = {
+        self.session.headers.update({
             "user-agent": self.user_agent,
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
                       "image/webp,*/*;q=0.8",
@@ -28,7 +28,7 @@ class Imagetwist:
             "dnt": "1",
             "pragma": "no-cache",
             "upgrade-insecure-requests": "1"
-        }
+        })
 
         self._balance = None
         self._files_count = None
@@ -249,6 +249,41 @@ class Imagetwist:
             self._read_my_account()
 
         return(self._balance)
+
+    def get_image(self, url):
+        """Download file from Imagetwist"""
+        print(f"Downloading {url}")
+        self.status = False
+        r = self.session.get(url)
+
+        # Invalid HTTP status
+        if r.status_code != 200:
+            print(f"HTTP error: {r.status}")
+            self.error = f"HTTP status {r.status}"
+            return self
+
+        # Extract image data
+        bs = BeautifulSoup(r.text, 'html.parser')
+        img = bs.find("img", {"class": "pic img img-responsive"})
+        if not img:
+            print("Cannot find image on Imagetwist website")
+            self.error = "Cannot find image on imagetwist website"
+            return self
+
+        # Get image data
+        self.filename = img["alt"]
+        r = self.session.get(img["src"])
+
+        # Invalid HTTP status
+        if r.status_code != 200:
+            print(f"HTTP error when requesting image: {r.status}")
+            self.error = f"HTTP status {r.status}"
+            return self
+
+        self.image = r.content
+        self.status = True
+
+        return self
 
     def used_space(self):
 
