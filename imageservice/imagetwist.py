@@ -259,15 +259,14 @@ class Imagetwist:
         # Invalid HTTP status
         if r.status_code != 200:
             print(f"HTTP error: {r.status}")
-            self.error = f"HTTP status {r.status}"
+            self.error = "page_error"
             return self
 
         # Extract image data
         bs = BeautifulSoup(r.text, 'html.parser')
         img = bs.find("img", {"class": "pic img img-responsive"})
         if not img:
-            print("Cannot find image on Imagetwist website")
-            self.error = "Cannot find image on imagetwist website"
+            self.error = "image_not_found"
             return self
 
         # Get image data
@@ -276,8 +275,7 @@ class Imagetwist:
 
         # Invalid HTTP status
         if r.status_code != 200:
-            print(f"HTTP error when requesting image: {r.status}")
-            self.error = f"HTTP status {r.status}"
+            self.error = "image_download_error"
             return self
 
         self.image = r.content
