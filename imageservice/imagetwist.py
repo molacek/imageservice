@@ -34,8 +34,15 @@ class Imagetwist:
         self._files_count = None
         self._used_space = None
 
+        # Prepare cache dir
+        cache_dir = XDG_CACHE_HOME / "imageservice/imagetwist"
+        if not os.path.isdir(cache_dir):
+            os.makedirs(cache_dir)
+
         # Prepare blacklist database
-        blacklist_db_file = str(XDG_CACHE_HOME / "imageservice/blacklist.sqlite")
+        blacklist_db_file = str(
+            cache_dir / "blacklist.sqlite"
+        )
         self.blacklist_db_conn = sqlite3.connect(blacklist_db_file)
         self.blacklist_db_cur = self.blacklist_db_conn.cursor()
         self.blacklist_db_cur.execute(
@@ -97,6 +104,13 @@ class Imagetwist:
         fn = ''.join(random.choice(letters) for i in range(length))
         return "{0:s}.jpg".format(fn)
 
+    def _random_string(length=12):
+        return(
+            "".join(
+                random.choice(string.digits) for _ in range(12)
+            )
+        )
+
     def _prepare_upload_file(self, filename, filesize=6000000, force=False):
 
         upload_file = {
@@ -138,9 +152,7 @@ class Imagetwist:
                 if not login_res:
                     return False
 
-
-
-            upload_id = "".join(random.choice(string.digits) for _ in range(12))
+            upload_id = self._random_string(12)
             upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
                 "upload_type=file".format(self.action, upload_id)
 
@@ -166,12 +178,6 @@ class Imagetwist:
                 )
             except requests.exceptions.ConnectionError:
                 print("Connection error. Will try again")
-                self.logged_in = False
-                time.sleep(10)
-                continue
-
-            except:
-                print("Other error. Will try again")
                 self.logged_in = False
                 time.sleep(10)
                 continue
@@ -243,6 +249,9 @@ class Imagetwist:
         small = bs.find('small').text
         self._files_count = small[1:-7]
 
+    def _valid_url_schema(url):
+        return(url.startswith("http://") or url.startswith("https://"))
+
     def balance(self):
 
         if self._balance is None:
@@ -283,6 +292,13 @@ class Imagetwist:
 
         return self
 
+    def payout(self):
+        r = self.session.get("https://imagetwist.com/?"
+                             "op=convert_points&convert_profit=1")
+        if "Payment requested successfully." in r.text:
+            return True
+        return False
+
     def used_space(self):
 
         if self._used_space is None:
@@ -299,9 +315,7 @@ class Imagetwist:
 
     def validate(self, thumb_url):
 
-        valid_schema = thumb_url.startswith("http://") or thumb_url.startswith("https://")
-
-        if not valid_schema:
+        if not self._valid_url_schema(thumb_url):
             return "invalid_schema"
 
         while True:
