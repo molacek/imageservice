@@ -33,6 +33,7 @@ class Imagetwist:
         self._balance = None
         self._files_count = None
         self._used_space = None
+        self._payment_position = None
 
         # Prepare cache dir
         cache_dir = XDG_CACHE_HOME / "imageservice/imagetwist"
@@ -237,6 +238,10 @@ class Imagetwist:
                 self._used_space = all_divs[i+1].text.split('\n')[1].strip()
                 break
 
+        # Get payment position
+        all_td = bs.find(string="Your position in List").parent
+        self._payment_position = all_td.find_next_sibling('td').text
+
     def _read_my_files(self):
 
         if not self.logged_in:
@@ -291,6 +296,24 @@ class Imagetwist:
         self.status = True
 
         return self
+
+    def payment_position(self):
+        if self._payment_position is None:
+            self._read_my_account(self)
+        return self._payment_position
+
+    def pending(self):
+        r = self.session.get("https://imagetwist.com/?op=my_payments")
+        bs = BeautifulSoup(r.text, 'html.parser')
+        table_body = bs.find("tbody")
+        if table_body is None:
+            return None
+        first_row = table_body.find("tr")
+        cells = first_row.find_all("td")
+        if cells[2].text == "PENDING":
+            return cells[1].text
+
+        return None
 
     def payout(self):
         r = self.session.get("https://imagetwist.com/?"
