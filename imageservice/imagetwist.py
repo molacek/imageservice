@@ -33,9 +33,17 @@ class Imagetwist:
         self._balance = None
         self._files_count = None
         self._used_space = None
+        self._payment_position = None
+
+        # Prepare cache dir
+        cache_dir = XDG_CACHE_HOME / "imageservice/imagetwist"
+        if not os.path.isdir(cache_dir):
+            os.makedirs(cache_dir)
 
         # Prepare blacklist database
-        blacklist_db_file = str(XDG_CACHE_HOME / "imageservice/blacklist.sqlite")
+        blacklist_db_file = str(
+            cache_dir / "blacklist.sqlite"
+        )
         self.blacklist_db_conn = sqlite3.connect(blacklist_db_file)
         self.blacklist_db_cur = self.blacklist_db_conn.cursor()
         self.blacklist_db_cur.execute(
@@ -97,6 +105,13 @@ class Imagetwist:
         fn = ''.join(random.choice(letters) for i in range(length))
         return "{0:s}.jpg".format(fn)
 
+    def _random_string(length=12):
+        return(
+            "".join(
+                random.choice(string.digits) for _ in range(12)
+            )
+        )
+
     def _prepare_upload_file(self, filename, filesize=6000000, force=False):
 
         upload_file = {
@@ -138,9 +153,7 @@ class Imagetwist:
                 if not login_res:
                     return False
 
-
-
-            upload_id = "".join(random.choice(string.digits) for _ in range(12))
+            upload_id = self._random_string(12)
             upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
                 "upload_type=file".format(self.action, upload_id)
 
@@ -231,6 +244,10 @@ class Imagetwist:
                 self._used_space = all_divs[i+1].text.split('\n')[1].strip()
                 break
 
+        # Get payment position
+        all_td = bs.find(string="Your position in List").parent
+        self._payment_position = all_td.find_next_sibling('td').text
+
     def _read_my_files(self):
 
         if not self.logged_in:
@@ -242,6 +259,9 @@ class Imagetwist:
         # Extract files count
         small = bs.find('small').text
         self._files_count = small[1:-7]
+
+    def _valid_url_schema(url):
+        return(url.startswith("http://") or url.startswith("https://"))
 
     def balance(self):
 
@@ -294,6 +314,31 @@ class Imagetwist:
 
         return self
 
+    def payment_position(self):
+        if self._payment_position is None:
+            self._read_my_account(self)
+        return self._payment_position
+
+    def pending(self):
+        r = self.session.get("https://imagetwist.com/?op=my_payments")
+        bs = BeautifulSoup(r.text, 'html.parser')
+        table_body = bs.find("tbody")
+        if table_body is None:
+            return None
+        first_row = table_body.find("tr")
+        cells = first_row.find_all("td")
+        if cells[2].text == "PENDING":
+            return cells[1].text
+
+        return None
+
+    def payout(self):
+        r = self.session.get("https://imagetwist.com/?"
+                             "op=convert_points&convert_profit=1")
+        if "Payment requested successfully." in r.text:
+            return True
+        return False
+
     def used_space(self):
 
         if self._used_space is None:
@@ -310,9 +355,7 @@ class Imagetwist:
 
     def validate(self, thumb_url):
 
-        valid_schema = thumb_url.startswith("http://") or thumb_url.startswith("https://")
-
-        if not valid_schema:
+        if not self._valid_url_schema(thumb_url):
             return "invalid_schema"
 
         while True:
