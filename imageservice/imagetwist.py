@@ -160,7 +160,6 @@ class Imagetwist:
             try:
                 r = self.session.post(
                     upload_url,
-                    headers=self.headers,
                     files=upload_file,
                     data=upload_data
                 )
@@ -170,8 +169,9 @@ class Imagetwist:
                 time.sleep(10)
                 continue
 
-            except:
+            except Exception as e:
                 print("Other error. Will try again")
+                print(e)
                 self.logged_in = False
                 time.sleep(10)
                 continue
@@ -252,9 +252,20 @@ class Imagetwist:
 
     def get_image(self, url):
         """Download file from Imagetwist"""
-        print(f"Downloading {url}")
         self.status = False
-        r = self.session.get(url)
+
+        if url.startswith("https://error"):
+            self.error = "marked_as_error"
+            return self
+
+        while True:
+            try:
+                r = self.session.get(url)
+            except requests.exceptions.ConnectionError:
+                print("Connection exception. Waiting 10 seconds")
+                time.sleep(10)
+                continue
+            break
 
         # Invalid HTTP status
         if r.status_code != 200:

@@ -7,7 +7,6 @@ from . import turboimagehost
 
 
 def download(url, path=None):
-
     if url.startswith("https://imx.to/"):
         (status, image_data) = imxto.get_image_url(url)
     elif url.startswith("http://www.imagebam.com/"):
@@ -20,7 +19,7 @@ def download(url, path=None):
         (status, image_data) = turboimagehost.get_image_url(url)
     elif url.startswith("https://imgbox.com"):
         (status, image_data) = imgbox.get_image_url(url)
-    elif url.startswith("https://imagetwist.com"):
+    elif url.startswith("https://imagetwist.com") or url.startswith("http://imagetwist.com") or url.startswith("https://error"):
         it = imagetwist.Imagetwist()
         result = it.get_image(url)
         if not result.status:
