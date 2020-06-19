@@ -105,7 +105,7 @@ class Imagetwist:
         fn = ''.join(random.choice(letters) for i in range(length))
         return "{0:s}.jpg".format(fn)
 
-    def _random_string(length=12):
+    def _random_string(self, length=12):
         return(
             "".join(
                 random.choice(string.digits) for _ in range(12)
