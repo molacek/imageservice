@@ -8,6 +8,7 @@ import sqlite3
 from bs4 import BeautifulSoup
 from . import utils
 from xdg import XDG_CACHE_HOME
+import imageservice
 
 
 class Imagetwist:
@@ -260,7 +261,7 @@ class Imagetwist:
         small = bs.find('small').text
         self._files_count = small[1:-7]
 
-    def _valid_url_schema(url):
+    def _valid_url_schema(self, url):
         return(url.startswith("http://") or url.startswith("https://"))
 
     def balance(self):
@@ -355,8 +356,11 @@ class Imagetwist:
 
     def validate(self, thumb_url):
 
+        status = imageservice.ValidateStatus(False)
+
         if not self._valid_url_schema(thumb_url):
-            return "invalid_schema"
+            status.error = "invalid_schema"
+            return status
 
         while True:
             try:
@@ -372,17 +376,22 @@ class Imagetwist:
             break
 
         if r.status_code == 404:
-            return "not_found"
+            status.error = "not_found"
+            return status
 
         if "Content-Type" not in r.headers:
-            return "not_found"
+            status.error = "not_found"
+            return status
 
         if "Content-Length" not in r.headers:
-            return "not_found"
+            status.error = "not_found"
+            return status
 
         if r.headers["Content-Length"] == "8183":
             image_md5 = hashlib.md5(r.content).hexdigest()
             if image_md5 == "0bc8d04776c8eac2a12568d109162249":
-                return "not_found"
+                status.error = "not_found"
+                return status
 
-        return "ok"
+        status.status = True
+        return status

@@ -5,10 +5,16 @@ import sys
 from . import imxto, imagebam, pimpandhost, imagetwist, pixhost, imgbox
 from . import turboimagehost
 
-class Status:
+class DownloadStatus:
     def __init__(self, status = None, error = None):
         self.status = status
         self.error = error
+
+class ValidateStatus:
+    def __init__(self, status = None, error = None):
+        self.status = status
+        self.error = error
+
 
 def download(url, path=None):
     if url.startswith("https://imx.to/"):
@@ -39,7 +45,7 @@ def download(url, path=None):
 
     else:
         print("Cannot find image service for downloading {0:s}".format(url))
-        return(Status(False, "invalid_image_service"))
+        return(DownloadStatus(False, "invalid_image_service"))
 
     if not status:
         print("Error extractiong image from {0:s}".format(url))
