@@ -13,7 +13,7 @@ import imageservice
 
 class Imagetwist:
 
-    def __init__(self, username=None, password=None, proxies=None):
+    def __init__(self, username=None, password=None, proxy=None):
         self.username = username
         self.password = password
         self.logged_in = False
@@ -54,8 +54,8 @@ class Imagetwist:
             """
         )
 
-        if proxies:
-            self.session.proxies.update(proxies)
+        if proxy:
+            self.session.proxies.update({'http': proxy, 'https': proxy})
 
         return
 
@@ -303,7 +303,14 @@ class Imagetwist:
 
         # Get image data
         self.filename = img["alt"]
-        r = self.session.get(img["src"])
+        while True:
+            try:
+                r = self.session.get(img["src"], timeout=60)
+            except requests.exceptions.ConnectionError:
+                print("Connection error. Will try again in 10 seconds...")
+                time.sleep(10)
+                continue
+            break
 
         # Invalid HTTP status
         if r.status_code != 200:
