@@ -1,14 +1,44 @@
 """Upload and validate images"""
 import requests
 import time
-import sys
 from . import imxto, imagebam, pimpandhost, imagetwist, pixhost, imgbox
 from . import turboimagehost
+from pathlib import PosixPath
+
 
 class DownloadStatus:
     def __init__(self, status = None, error = None):
         self.status = status
         self.error = error
+
+
+class Uploader:
+    def __init__(self, service, username, password, proxy):
+        self.status = True
+        self.error = None
+        self.proxy = None
+        self.username = username
+        self.password = password
+        self.proxy = proxy
+        self.service = service
+
+        if service == "imxto":
+            self.service = imxto.Imxto(username, password, proxy)
+        elif service == "imagetwist":
+            self.service = imagetwist.Imagetwist(username, password, proxy)
+        else:
+            raise Exception("non_existing_service")
+
+    def upload(self, file_path):
+        # Check if file exists
+        file_path = PosixPath(file_path)
+        if not file_path.is_file():
+            self.status = False
+            self.error = "file_not_found"
+            return self
+
+        return self.service.upload(file_path)
+
 
 class ValidateStatus:
     def __init__(self, status = None, error = None):
@@ -92,12 +122,3 @@ def validate(thumb_url, sess=None):
         return "not_implemented"
 
     return imageservice.validate(thumb_url, sess)
-
-
-def upload(service, filename):
-    if service == "imagetwist":
-        upload_module = imagetwist
-    else:
-        print("ERROR: Unknown service: {0:s}".format(service))
-        return False
-    return upload_module.upload(filename)

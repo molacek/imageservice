@@ -39,7 +39,7 @@ def resize_image(filename, filesize):
 
 def image_buffer(filename, filesize=None):
 
-    # Filezeise limit is set
+    # File size limit is set
     if filesize:
         statinfo = os.stat(filename)
         if statinfo.st_size > filesize:

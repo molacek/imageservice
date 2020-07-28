@@ -5,15 +5,19 @@ import random
 import string
 import os
 import sqlite3
-from bs4 import BeautifulSoup
-from . import utils
-from xdg import XDG_CACHE_HOME
 import imageservice
+
+from . import utils
+from . import httpclient
+
+from bs4 import BeautifulSoup
+from xdg import XDG_CACHE_HOME
 
 
 class Imagetwist:
 
     def __init__(self, username=None, password=None, proxy=None):
+        self.http = httpclient.HttpClient(proxy)
         self.username = username
         self.password = password
         self.logged_in = False
@@ -35,6 +39,9 @@ class Imagetwist:
         self._files_count = None
         self._used_space = None
         self._payment_position = None
+        self.status = True
+        self.image = None
+        self.thumbnail = None
 
         # Prepare cache dir
         cache_dir = XDG_CACHE_HOME / "imageservice/imagetwist"
@@ -131,15 +138,10 @@ class Imagetwist:
 
     def upload(self, filename):
 
-        # Check if file exists
-        if not os.path.isfile(filename):
-            print(f"Error: {filename} is not a file")
-            return False
-
         # Check if file is not on blacklist
         self.blacklist_db_cur.execute(
             "SELECT id FROM blacklist WHERE path = ?",
-            (os.path.realpath(filename),)
+            (str(filename.resolve()),)
         )
         res = self.blacklist_db_cur.fetchone()
         if res:
@@ -152,7 +154,9 @@ class Imagetwist:
             if not self.logged_in:
                 login_res = self._login()
                 if not login_res:
-                    return False
+                    self.status = False
+                    self.error = "login_failed"
+                    return self
 
             upload_id = self._random_string(12)
             upload_url = "{0:s}{1:s}&js_on=0&utype=reg&" \
@@ -171,24 +175,11 @@ class Imagetwist:
                 "submit_btn": "Upload"
             }
 
-            try:
-                r = self.session.post(
-                    upload_url,
-                    files=upload_file,
-                    data=upload_data
-                )
-            except requests.exceptions.ConnectionError:
-                print("Connection error. Will try again")
-                self.logged_in = False
-                time.sleep(10)
-                continue
-
-            except Exception as e:
-                print("Other error. Will try again")
-                print(e)
-                self.logged_in = False
-                time.sleep(10)
-                continue
+            r = self.http.post(
+                upload_url,
+                files=upload_file,
+                data=upload_data
+            )
 
             if "<pre>not image at " in r.text:
                 print(f"Unable to upload {filename} even after "
@@ -201,7 +192,9 @@ class Imagetwist:
                 self.blacklist_db_conn.commit()
                 print(f"File {filename} is stored on blacklist")
 
-                return False
+                self.status = False
+                self.error = "image_invalid"
+                return self
 
             break
 
@@ -210,15 +203,19 @@ class Imagetwist:
         n = 0
         for div in all_divs:
             if div.text == 'Preview:':
-                thumb = all_divs[n+1].find('img')["src"]
-                img = all_divs[n+1].find('a')["href"]
-                return(thumb, '/'.join(img.split('/')[0:-1]))
+                self.thumbnail = all_divs[n+1].find('img')["src"]
+                # Cut off the filename
+                self.image = '/'.join(
+                    all_divs[n+1].find('a')["href"].split('/')[:-1]
+                )
+                self.status = True
+                return self
             n += 1
 
-        print("Error result")
-        print(r.text)
+        self.status = False
+        self.error = "missing_upload_thumb"
 
-        return(False)
+        return self
 
     def _read_my_account(self):
 
