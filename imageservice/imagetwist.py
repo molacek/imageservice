@@ -1,6 +1,4 @@
 import hashlib
-import requests
-import time
 import random
 import string
 import os
@@ -21,20 +19,6 @@ class Imagetwist:
         self.username = username
         self.password = password
         self.logged_in = False
-        self.session = requests.Session()
-        self.user_agent = ("Mozilla/5.0 (Windows NT 6.3; Win64; x64) "
-                           "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
-                           "51.0.2683.0 Safari/537.36")
-        self.session.headers.update({
-            "user-agent": self.user_agent,
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                      "image/webp,*/*;q=0.8",
-            "cache-control": "no-cache",
-            "dnt": "1",
-            "pragma": "no-cache",
-            "upgrade-insecure-requests": "1"
-        })
-
         self._balance = None
         self._files_count = None
         self._used_space = None
@@ -61,9 +45,6 @@ class Imagetwist:
             """
         )
 
-        if proxy:
-            self.session.proxies.update({'http': proxy, 'https': proxy})
-
         return
 
     def _login(self):
@@ -71,25 +52,16 @@ class Imagetwist:
         if self.logged_in:
             return
 
-        while True:
-            try:
-                r = self.session.post(
-                    "https://imagetwist.com/",
-                    data={
-                       "op": "login",
-                       "redirect": "",
-                       "login": self.username,
-                       "password": self.password,
-                       "submit_btn": "Login"
-                    }
-                )
-            except requests.exceptions.ConnectionError:
-                print("Connection error when logging in into Imagetwist. "
-                      "Will try again in 10 seconds")
-                time.sleep(10)
-                continue
-
-            break
+        r = self.http.post(
+            "https://imagetwist.com/",
+            data={
+                "op": "login",
+                "redirect": "",
+                "login": self.username,
+                "password": self.password,
+                "submit_btn": "Login"
+            }
+        )
 
         bs = BeautifulSoup(r.text, 'html.parser')
         if not bs:
@@ -222,7 +194,7 @@ class Imagetwist:
         if not self.logged_in:
             self._login()
 
-        r = self.session.get("https://imagetwist.com/?op=my_account")
+        r = self.http.get("https://imagetwist.com/?op=my_account")
         bs = BeautifulSoup(r.text, 'html.parser')
 
         # Extract balance
@@ -251,7 +223,7 @@ class Imagetwist:
         if not self.logged_in:
             self._login()
 
-        r = self.session.get("https://imagetwist.com/?op=my_files")
+        r = self.http.get("https://imagetwist.com/?op=my_files")
         bs = BeautifulSoup(r.text, 'html.parser')
 
         # Extract files count
@@ -276,14 +248,7 @@ class Imagetwist:
             self.error = "marked_as_error"
             return self
 
-        while True:
-            try:
-                r = self.session.get(url)
-            except requests.exceptions.ConnectionError:
-                print("Connection exception. Waiting 10 seconds")
-                time.sleep(10)
-                continue
-            break
+        r = self.http.get(url)
 
         # Invalid HTTP status
         if r.status_code != 200:
@@ -300,14 +265,7 @@ class Imagetwist:
 
         # Get image data
         self.filename = img["alt"]
-        while True:
-            try:
-                r = self.session.get(img["src"], timeout=60)
-            except requests.exceptions.ConnectionError:
-                print("Connection error. Will try again in 10 seconds...")
-                time.sleep(10)
-                continue
-            break
+        r = self.http.get(img["src"])
 
         # Invalid HTTP status
         if r.status_code != 200:
@@ -325,7 +283,7 @@ class Imagetwist:
         return self._payment_position
 
     def pending(self):
-        r = self.session.get("https://imagetwist.com/?op=my_payments")
+        r = self.http.get("https://imagetwist.com/?op=my_payments")
         bs = BeautifulSoup(r.text, 'html.parser')
         table_body = bs.find("tbody")
         if table_body is None:
@@ -338,8 +296,9 @@ class Imagetwist:
         return None
 
     def payout(self):
-        r = self.session.get("https://imagetwist.com/?"
-                             "op=convert_points&convert_profit=1")
+        r = self.http.get(
+            "https://imagetwist.com/?op=convert_points&convert_profit=1"
+        )
         if "Payment requested successfully." in r.text:
             return True
         return False
@@ -366,18 +325,7 @@ class Imagetwist:
             status.error = "invalid_schema"
             return status
 
-        while True:
-            try:
-                r = self.session.get(thumb_url)
-            except requests.exceptions.ConnectionError:
-                print("Error connecting to {0:s}".format(thumb_url))
-                time.sleep(10)
-                continue
-            except requests.exceptions.ReadTimeout:
-                print("Read timeout for {0:s}".format(thumb_url))
-                time.sleep(10)
-                continue
-            break
+        r = self.http.get(thumb_url)
 
         if r.status_code == 404:
             status.error = "not_found"

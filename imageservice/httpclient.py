@@ -31,13 +31,13 @@ class HttpClient:
                 return(
                     self.session.post(
                         url,
+                        timeout=60,
                         data=data,
                         files=files,
                         proxies=self.proxies)
                 )
             except requests.exceptions.ConnectionError:
                 print("Connection error. Will try again")
-                self.logged_in = False
                 time.sleep(10)
                 continue
 
@@ -45,5 +45,25 @@ class HttpClient:
                 print("Other error. Will try again")
                 print(e)
                 self.logged_in = False
+                time.sleep(10)
+                continue
+
+    def get(self, url):
+        while True:
+            try:
+                return(
+                    self.session.get(
+                        url,
+                        timeout=60,
+                        proxies=self.proxies)
+                )
+            except requests.exceptions.ConnectionError:
+                print("Connection error. Will try again")
+                time.sleep(10)
+                continue
+
+            except Exception as e:
+                print("Other error. Will try again")
+                print(e)
                 time.sleep(10)
                 continue

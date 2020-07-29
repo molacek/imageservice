@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name="imageservice",
-    version="0.0.30",
+    version="0.0.31",
     packages=setuptools.find_packages(),
     install_requires=["requests", "bs4", "xdg"],
     test_suite='nose.collector',
