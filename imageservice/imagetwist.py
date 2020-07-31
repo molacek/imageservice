@@ -118,7 +118,9 @@ class Imagetwist:
         res = self.blacklist_db_cur.fetchone()
         if res:
             print(f"File {filename} is on blacklist")
-            return False
+            self.status = False
+            self.error = "file_blacklisted"
+            return self
 
         while True:
 

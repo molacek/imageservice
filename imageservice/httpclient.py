@@ -58,7 +58,7 @@ class HttpClient:
                         proxies=self.proxies)
                 )
             except requests.exceptions.ConnectionError:
-                print("Connection error. Will try again")
+                print(f"ConnectionError exception for {url}. Will try again in 10 secs.")
                 time.sleep(10)
                 continue
 
