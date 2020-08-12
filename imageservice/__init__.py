@@ -7,7 +7,7 @@ from pathlib import PosixPath
 
 
 class DownloadStatus:
-    def __init__(self, status = None, error = None):
+    def __init__(self, status=None, error=None):
         self.status = status
         self.error = error
 
@@ -41,7 +41,7 @@ class Uploader:
 
 
 class ValidateStatus:
-    def __init__(self, status = None, error = None):
+    def __init__(self, status=None, error=None):
         self.status = status
         self.error = error
 
@@ -59,7 +59,9 @@ def download(url, path=None):
         (status, image_data) = turboimagehost.get_image_url(url)
     elif url.startswith("https://imgbox.com"):
         (status, image_data) = imgbox.get_image_url(url)
-    elif url.startswith("https://imagetwist.com") or url.startswith("http://imagetwist.com") or url.startswith("https://error"):
+    elif (url.startswith("https://imagetwist.com")
+          or url.startswith("http://imagetwist.com")
+          or url.startswith("https://error")):
         it = imagetwist.Imagetwist()
         result = it.get_image(url)
         if not result.status:
@@ -78,7 +80,7 @@ def download(url, path=None):
         return(DownloadStatus(False, "invalid_image_service"))
 
     if not status:
-        print("Error extractiong image from {0:s}".format(url))
+        print("Error extracting image from {0:s}".format(url))
         return(False)
 
     (image_url, file_name) = image_data
