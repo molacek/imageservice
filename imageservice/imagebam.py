@@ -19,6 +19,8 @@ class Imagebam:
         self.image = None
 
     def get_image_url(self, url):
+        if url.startswith("https://"):
+            url = "http://{0:s}".format(url[8:])
         r = requests.get(url)
         soup = BeautifulSoup(r.text, "html.parser")
         meta_elements = soup.find_all("meta", attrs={"property": "og:image"})
