@@ -48,9 +48,11 @@ class ValidateStatus:
 
 def download(url, path=None):
     if url.startswith("https://imx.to/"):
-        (status, image_data) = imxto.get_image_url(url)
-    elif url.startswith("http://www.imagebam.com/"):
-        (status, image_data) = imagebam.get_image_url(url)
+        image_service = imxto.Imxto()
+        (status, image_data) = image_service.get_image_url(url)
+    elif url.startswith("http://www.imagebam.com/") or url.startswith("https://www.imagebam.com/"):
+        image_service = imagebam.Imagebam()
+        (status, image_data) = image_service.get_image_url(url)
     elif url.startswith("https://pimpandhost.com"):
         (status, image_data) = pimpandhost.get_image_url(url)
     elif url.startswith("https://pixhost.to"):
@@ -85,9 +87,13 @@ def download(url, path=None):
 
     (image_url, file_name) = image_data
 
+    if PosixPath(file_name).is_file():
+        print("Image", file_name, "already downloaded")
+        return
+
     while True:
         try:
-            r = requests.get(image_url)
+            r = requests.get(image_url, timeout=60)
         except requests.exceptions.ConnectionError:
             print("Error connecting to {0:s}".format(image_url))
             time.sleep(10)
@@ -120,6 +126,8 @@ def validate(thumb_url, sess=None):
 
     if "imagetwist.com" in thumb_url:
         imageservice = imagetwist
+    elif "imx.to" in thumb_url:
+        imageservice = imxto
     else:
         return "not_implemented"
 
