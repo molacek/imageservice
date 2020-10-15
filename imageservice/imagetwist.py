@@ -170,6 +170,12 @@ class Imagetwist:
                 self.error = "image_invalid"
                 return self
 
+            if "this file is banned by administrator" in r.text:
+                print(f"Image {filename} is banned by administrator")
+                self.status = False
+                self.error = "banned_by_administrator"
+                return self
+
             break
 
         bs = BeautifulSoup(r.text, 'html.parser')
@@ -188,6 +194,9 @@ class Imagetwist:
 
         self.status = False
         self.error = "missing_upload_thumb"
+
+        with open("/tmp/missing_upload_thumb.html", 'w') as f:
+            f.write(r.text)
 
         return self
 

@@ -1,3 +1,5 @@
+import hashlib
+import imageservice
 import requests
 from . import httpclient
 from . import utils
@@ -40,6 +42,9 @@ class Imxto:
             )
         }
         return upload_file
+    
+    def _valid_url_schema(self, url):
+        return(url.startswith("http://") or url.startswith("https://"))
 
     def get_image_url(self, url):
         payload = {"imgContinue": "Continue to image ..."}
@@ -99,3 +104,35 @@ class Imxto:
         self.status = True
 
         return self
+
+    
+    def validate(self, thumb_url):
+
+        status = imageservice.ValidateStatus(False)
+
+        if not self._valid_url_schema(thumb_url):
+            status.error = "invalid_schema"
+            return status
+
+        r = self.http.get(thumb_url)
+
+        if r.status_code == 404:
+            status.error = "not_found"
+            return status
+
+        if "Content-Type" not in r.headers:
+            status.error = "not_found"
+            return status
+
+        if "Content-Length" not in r.headers:
+            status.error = "not_found"
+            return status
+
+        if r.headers["Content-Length"] == "8183":
+            image_md5 = hashlib.md5(r.content).hexdigest()
+            if image_md5 == "0bc8d04776c8eac2a12568d109162249":
+                status.error = "not_found"
+                return status
+
+        status.status = True
+        return status
