@@ -1,7 +1,10 @@
 import hashlib
 import imageservice
+import logging
 import requests
+
 from . import httpclient
+from . import logs
 from . import utils
 
 from bs4 import BeautifulSoup
@@ -18,6 +21,7 @@ class Imxto:
         self.proxy = proxy
         self.thumbnail = None
         self.image = None
+        logs.init()
 
     def _login(self):
         print("Logging into imx.to ...")
@@ -107,6 +111,8 @@ class Imxto:
 
     
     def validate(self, thumb_url):
+
+        logging.info("Validating using Imxto service")
 
         status = imageservice.ValidateStatus(False)
 

@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import random
 import string
 import os
@@ -6,6 +7,7 @@ import sqlite3
 import imageservice
 
 from . import utils
+from . import logs
 from . import httpclient
 
 from bs4 import BeautifulSoup
@@ -26,6 +28,8 @@ class Imagetwist:
         self.status = True
         self.image = None
         self.thumbnail = None
+
+        logs.init()
 
         # Prepare cache dir
         cache_dir = XDG_CACHE_HOME / "imageservice/imagetwist"
@@ -329,6 +333,8 @@ class Imagetwist:
         return(self._files_count)
 
     def validate(self, thumb_url):
+
+        logging.info("Validating using Imagetwist service")
 
         status = imageservice.ValidateStatus(False)
 
