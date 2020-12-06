@@ -11,6 +11,7 @@ from . import logs
 from . import httpclient
 
 from bs4 import BeautifulSoup
+from time import sleep
 from xdg import XDG_CACHE_HOME
 
 
@@ -263,13 +264,16 @@ class Imagetwist:
             self.error = "marked_as_error"
             return self
 
-        r = self.http.get(url)
+        while True:
+            r = self.http.get(url)
 
-        # Invalid HTTP status
-        if r.status_code != 200:
-            print(f"HTTP error: {r.status}")
-            self.error = "page_error"
-            return self
+            # Invalid HTTP status
+            if r.status_code != 200:
+                logging.warning("Invalid HTTP status (%s) error when opening main page. Will try again in 10 secs.", r.status_code)
+                sleep(10)
+                continue
+
+            break
 
         # Extract image data
         bs = BeautifulSoup(r.text, 'html.parser')
