@@ -21,6 +21,7 @@ class Imxto:
         self.proxy = proxy
         self.thumbnail = None
         self.image = None
+        self.filename = None
         logs.init()
 
     def _login(self):
@@ -49,6 +50,46 @@ class Imxto:
     
     def _valid_url_schema(self, url):
         return(url.startswith("http://") or url.startswith("https://"))
+
+    def get_image(self, url):
+        """Download file from imx.to"""
+        self.status = False
+
+        payload = {"imgContinue": "Continue to image ..."}
+
+        while True:
+            r = self.http.post(url, data=payload)
+
+            # Invalid HTTP status
+            if r.status_code != 200:
+                logging.warning("Invalid HTTP status (%s) error when opening main page. Will try again in 10 secs.", r.status_code)
+                sleep(10)
+                continue
+
+            if "This image has been removed or is missing" in r.text:
+                self.error = "image_not_found"
+                return self
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            print(soup)
+            image_elements = soup.find_all("img", attrs={"class": "centred"})
+            image_element = image_elements[0]
+            url = image_element["src"]
+            self.filename = image_element["alt"]
+            
+            break
+
+        r = self.http.get(url)
+
+        # Invalid HTTP status
+        if r.status_code != 200:
+            self.error = "image_download_error"
+            return self
+
+        self.image = r.content
+        self.status = True
+
+        return self
 
     def get_image_url(self, url):
         payload = {"imgContinue": "Continue to image ..."}

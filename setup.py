@@ -10,6 +10,8 @@ setuptools.setup(
     test_suite='nose.collector',
     test_require=['nose'],
     entry_points={
-        "console_scripts": []
+        "console_scripts": [
+            "download-image = imageservice:download_cmd"
+        ]
     }
 )

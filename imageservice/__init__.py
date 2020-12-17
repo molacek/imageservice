@@ -1,6 +1,7 @@
 """Upload and validate images"""
 import requests
 import time
+import sys
 from . import imxto, imagebam, pimpandhost, imagetwist, pixhost, imgbox
 from . import turboimagehost
 from pathlib import PosixPath
@@ -49,7 +50,15 @@ class ValidateStatus:
 def download(url, path=None):
     if url.startswith("https://imx.to/"):
         image_service = imxto.Imxto()
-        (status, image_data) = image_service.get_image_url(url)
+        result = image_service.get_image(url)
+        if not result.status:
+            return result
+        if not path:
+            path = result.filename
+        with open(path, 'wb') as f:
+            f.write(result.image)
+        return result
+
     elif url.startswith("http://www.imagebam.com/") or url.startswith("https://www.imagebam.com/"):
         image_service = imagebam.Imagebam()
         (status, image_data) = image_service.get_image_url(url)
@@ -107,6 +116,9 @@ def download(url, path=None):
 
     with open(file_name, 'wb') as f:
         f.write(r.content)
+
+def download_cmd():
+    download(sys.argv[1])
 
 
 def validate(thumb_url, sess=None):
